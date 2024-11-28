@@ -102,7 +102,6 @@ class SpatialExternalMemory(nn.Module):
 
     def find_nearby_grids(self, grid_input, w=config.spatial_width):
         grid_x, grid_y = grid_input[:, 0].data, grid_input[:, 1].data
-        tens = []
         grid_x_bd, grid_y_bd = [], []
         for i in range(-w, w + 1, 1):
             for j in range(-w, w + 1, 1):

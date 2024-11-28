@@ -7,6 +7,7 @@ import torch
 import tools.config as config
 from tools.compute_list import correlation_partition
 
+
 class WeightMSELoss(Module):
     def __init__(self, batch_size, sampling_num):
         super(WeightMSELoss, self).__init__()
@@ -50,7 +51,7 @@ class DiffLoss(Module):
 
 
 class Distill_Rank_Loss_ListWise(Module):
-    def __init__(self, loss_weight = config.rank_loss_weight):
+    def __init__(self, loss_weight=config.rank_loss_weight):
         super(Distill_Rank_Loss_ListWise, self).__init__()
         self.loss_weight = loss_weight
         print("Rank Loss Weight:", loss_weight)
@@ -74,9 +75,9 @@ class Distill_Rank_Loss_ListWise(Module):
 
             strong_above = strong_predicted_res.log().sum()
             weak_above = weak_predicted_res.log().sum()
-            strong_below_1 = strong_predicted_res.flip(0).cumsum(0)  # 在这一项之后的
-            strong_below_2 = weak_predicted_res.sum() # weak-correlated 
-            strong_below_3 = no_predicted_res.sum() # non-correlated
+            strong_below_1 = strong_predicted_res.flip(0).cumsum(0)
+            strong_below_2 = weak_predicted_res.sum()  # weak-correlated
+            strong_below_3 = no_predicted_res.sum()  # non-correlated
 
             strong_loss = (strong_below_1 + strong_below_2 + strong_below_3).log().sum() - strong_above
             weak_loss = (strong_below_3 - weak_above)
@@ -103,6 +104,7 @@ class WeightedRankingLoss(Module):
 class default():
     def __init__(self):
         pass
+
     def item(self):
         return "Not Included!"
 

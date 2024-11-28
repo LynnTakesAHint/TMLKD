@@ -117,10 +117,10 @@ class AttentionModule(nn.Module):
         attention_scores = torch.bmm(Q, K_T)  # (batch_size, seq_len, seq_len)
         attention_scores = attention_scores / torch.sqrt(torch.tensor(self.embed_dim, dtype=torch.float32))  # 缩放
 
-        A = F.softmax(attention_scores, dim=-1) 
+        A = F.softmax(attention_scores, dim=-1)
         s = torch.bmm(A, V)  # (batch_size, seq_len, embed_dim)
 
-        return s.squeeze(1)  
+        return s.squeeze(1)
 
 
 class T3S_Share_Network(nn.Module):

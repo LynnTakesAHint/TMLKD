@@ -2,20 +2,19 @@ import torch
 
 import torch.nn.functional as F
 import torch.autograd as autograd
-import time
 
-from  torch import nn
+from torch import nn
 import tools.config as config
+
 
 class Attention(nn.Module):
 
     def __init__(self, dim):
         super(Attention, self).__init__()
-        self.linear_out = nn.Linear(dim*2, dim)
+        self.linear_out = nn.Linear(dim * 2, dim)
         self.mask = None
         self.linear_weight = None
         self.linear_bias = None
-
 
     def set_mask(self, mask):
         """
@@ -29,7 +28,7 @@ class Attention(nn.Module):
         output = autograd.Variable(output, requires_grad=False)
         context = autograd.Variable(context, requires_grad=False)
         batch_size = output.size(0)
-        output = output.view(batch_size,1,-1)
+        output = output.view(batch_size, 1, -1)
         hidden_size = output.size(2)
         input_size = context.size(1)
         attn = torch.bmm(output, context.transpose(1, 2))
@@ -39,9 +38,8 @@ class Attention(nn.Module):
         attn = F.softmax(attn.view(-1, input_size), dim=1).view(batch_size, -1, input_size)
         # (batch, out_len, in_len) * (batch, in_len, dim) -> (batch, out_len, dim)
         oatt = (attn.data != attn.data).byte()
-        attn.data.masked_fill_(oatt.bool(),0.)
+        attn.data.masked_fill_(oatt.bool(), 0.)
         mix = torch.bmm(attn, context)
-
 
         # concat -> (batch, out_len, 2*dim)
         combined = torch.cat((mix, output), dim=2)
@@ -54,7 +52,7 @@ class Attention(nn.Module):
         output = autograd.Variable(output, requires_grad=False)
         context = autograd.Variable(context, requires_grad=False)
         batch_size = output.size(0)
-        output = output.view(batch_size,1,-1)
+        output = output.view(batch_size, 1, -1)
         hidden_size = output.size(2)
         input_size = context.size(1)
         # (batch, out_len, dim) * (batch, in_len, dim) -> (batch, out_len, in_len)
@@ -71,10 +69,11 @@ class Attention(nn.Module):
         self.linear_weight = autograd.Variable(self.linear_out.weight.data, requires_grad=False).cuda()
         self.linear_bias = autograd.Variable(self.linear_out.bias.data, requires_grad=False).cuda()
 
-        out = F.tanh(F.linear(combined.view(-1, 2 * hidden_size), self.linear_weight, self.linear_bias)).view(batch_size, -1, hidden_size)
+        out = F.tanh(F.linear(combined.view(-1, 2 * hidden_size), self.linear_weight, self.linear_bias)).view(
+            batch_size, -1, hidden_size)
         out = torch.squeeze(out, 1)
         oatt = (out.data != out.data).byte()
-        out.data.masked_fill_(oatt.bool(),0.)
+        out.data.masked_fill_(oatt.bool(), 0.)
         return out.cuda(), attn
 
 
@@ -102,18 +101,17 @@ class SpatialExternalMemory(nn.Module):
         return self.N, self.M, self.H
 
     def find_nearby_grids(self, grid_input, w=config.spatial_width):
-        grid_x, grid_y = grid_input[:,0].data, grid_input[:,1].data
-        tens = []
+        grid_x, grid_y = grid_input[:, 0].data, grid_input[:, 1].data
         grid_x_bd, grid_y_bd = [], []
-        for i in range(-w,w+1,1):
+        for i in range(-w, w + 1, 1):
             for j in range(-w, w + 1, 1):
-                grid_x_t = F.relu(grid_x+i)
-                grid_y_t = F.relu(grid_y+j)
+                grid_x_t = F.relu(grid_x + i)
+                grid_y_t = F.relu(grid_y + j)
                 grid_x_bd.append(grid_x_t)
                 grid_y_bd.append(grid_y_t)
-        grid_x_bd = torch.cat(grid_x_bd,0)
+        grid_x_bd = torch.cat(grid_x_bd, 0)
         grid_y_bd = torch.cat(grid_y_bd, 0)
-        t = self.memory[grid_x_bd, grid_y_bd, :].view(len(grid_x), (2*w+1)*(2*w+1), -1)
+        t = self.memory[grid_x_bd, grid_y_bd, :].view(len(grid_x), (2 * w + 1) * (2 * w + 1), -1)
         return t
 
     def update(self, grid_x, grid_y, updates):

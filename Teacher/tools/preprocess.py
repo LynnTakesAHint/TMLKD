@@ -1,6 +1,7 @@
 import pickle as pickle
 from typing import List, Tuple
 
+
 class Preprocesser(object):
     def __init__(self, delta=0.005, lat_range=[1, 2], lon_range=[1, 2]):
         self.delta = delta
@@ -16,10 +17,10 @@ class Preprocesser(object):
         self.y = y
 
     def _frange(self, start, end=None, inc=None):
-        if end == None:
+        if end is None:
             end = start + 0.0
             start = 0.0
-        if inc == None:
+        if inc is None:
             inc = 1.0
         L = []
         while 1:

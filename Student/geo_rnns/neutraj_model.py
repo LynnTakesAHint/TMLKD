@@ -65,14 +65,11 @@ class RNNEncoder(Module):
         inputs, inputs_len = inputs_a
         time_steps = inputs.size(1)
         out, state = initial_state
-        outputs = []
-        gates_out_all = []
         batch_weight_ih = autograd.Variable(self.cell.weight_ih.data, requires_grad=False).cuda()
         batch_weight_hh = autograd.Variable(self.cell.weight_hh.data, requires_grad=False).cuda()
         batch_bias_ih = autograd.Variable(self.cell.bias_ih.data, requires_grad=False).cuda()
         batch_bias_hh = autograd.Variable(self.cell.bias_hh.data, requires_grad=False).cuda()
         for t in range(time_steps):
-            # cell_input = inputs[:, t, :][:,:-2]
             cell_input = inputs[:, t, :]
             self.cell.batch_update_memory(cell_input, (out, state),
                                           batch_weight_ih, batch_weight_hh,

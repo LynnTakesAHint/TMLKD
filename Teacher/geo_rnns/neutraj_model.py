@@ -6,67 +6,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 
 import tools.config as config
-from geo_rnns.sam_cells import SAM_LSTMCell, SAM_GRUCell
 from geo_rnns.t3s_model import RNNEncoder, AttentionModule
-
-
-class RNNEncoder(nn.Module):
-    def __init__(self, input_size, hidden_size, grid_size, stard_LSTM=False, incell=True):
-        super(RNNEncoder, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.stard_LSTM = stard_LSTM
-        if self.stard_LSTM:
-            if config.recurrent_unit == 'GRU':
-                self.cell = torch.nn.GRUCell(input_size - 2, hidden_size).cuda()
-            else:
-                self.cell = torch.nn.LSTMCell(input_size - 2, hidden_size).cuda()
-        else:
-            if config.recurrent_unit == 'GRU':
-                self.cell = SAM_GRUCell(input_size, hidden_size, grid_size, incell=incell).cuda()
-            else:
-                self.cell = SAM_LSTMCell(input_size, hidden_size, grid_size, incell=incell).cuda()
-
-
-    def forward(self, inputs_a, initial_state=None):
-        inputs, inputs_len = inputs_a
-        time_steps = inputs.size(1)
-        out = None
-        if config.recurrent_unit == 'GRU' or config.recurrent_unit == 'SimpleRNN':
-            out = initial_state
-        else:
-            out, state = initial_state
-        outputs = []
-        for t in range(time_steps):
-            if self.stard_LSTM:
-                cell_input = inputs[:, t, :][:, :-2]
-            else:
-                cell_input = inputs[:, t, :]
-            if config.recurrent_unit == 'GRU' or config.recurrent_unit == 'SimpleRNN':
-                out = self.cell(cell_input, out)
-            else:
-                out, state = self.cell(cell_input, (out, state))
-            outputs.append(out)
-        mask_out = []
-        for b, v in enumerate(inputs_len):
-            mask_out.append(outputs[v - 1][b, :].view(1, -1))
-        return torch.cat(mask_out, dim=0)
-
-    def batch_grid_state_gates(self, inputs_a, initial_state=None):
-        inputs, inputs_len = inputs_a
-        time_steps = inputs.size(1)
-        out, state = initial_state
-        outputs = []
-        gates_out_all = []
-        batch_weight_ih = autograd.Variable(self.cell.weight_ih.data, requires_grad=False).cuda()
-        batch_weight_hh = autograd.Variable(self.cell.weight_hh.data, requires_grad=False).cuda()
-        batch_bias_ih = autograd.Variable(self.cell.bias_ih.data, requires_grad=False).cuda()
-        batch_bias_hh = autograd.Variable(self.cell.bias_hh.data, requires_grad=False).cuda()
-        for t in range(time_steps):
-            cell_input = inputs[:, t, :]
-            self.cell.batch_update_memory(cell_input, (out, state),
-                                    batch_weight_ih, batch_weight_hh,
-                                    batch_bias_ih, batch_bias_hh)
 
 
 class NeuTraj_Network(nn.Module):

@@ -7,26 +7,17 @@ import tools.config as config
 
 
 def pad_sequence(traj_grids, maxlen=250, pad_value=0.0):
-    """
-    padding
-    Args:
-        traj_grids: 原始轨迹
-        maxlen: 最大长度
-        pad_value: 空值
-
-    Returns:
-
-    """
     paddec_seqs = []
     for traj in traj_grids:
         pad_r = np.zeros_like(traj[0]) * pad_value
         while len(traj) < maxlen:
-            traj.append(pad_r)  # 在末尾不上同纬度的pad_value填充的矩阵
+            traj.append(pad_r)
         paddec_seqs.append(traj)
     return paddec_seqs
 
+
 def test_comput_embeddings(self, spatial_net, test_batch=900,
-                           private_embeddings=None, share_embeddings=None,mode='test', decoder = False):
+                           private_embeddings=None, share_embeddings=None, mode='test', decoder=False):
     embeddings_list = []
     s = time.time()
     j = 0
@@ -34,7 +25,6 @@ def test_comput_embeddings(self, spatial_net, test_batch=900,
         data_length = self.val_idx[1]
     else:
         data_length = config.full_datalength
-    embeddings = None
     if data_length % test_batch != 0:
         test_batch = 1000
     if data_length % test_batch != 0:
@@ -49,8 +39,8 @@ def test_comput_embeddings(self, spatial_net, test_batch=900,
         share_embeddings = torch.tensor(share_embeddings).cuda()
         private_embeddings = torch.tensor(private_embeddings).cuda()
         while j < data_length:
-            input_s = share_embeddings[j:j+test_batch]
-            input_p = private_embeddings[j:j+test_batch]
+            input_s = share_embeddings[j:j + test_batch]
+            input_p = private_embeddings[j:j + test_batch]
             out = spatial_net.get_embeddings(
                 input_s, input_p
             )
@@ -85,9 +75,9 @@ def test_comput_embeddings(self, spatial_net, test_batch=900,
     return embeddings_list.cpu().numpy()
 
 
-def validate_model(self, traj_embeddings, distance_type, similarity = True, print_batch = 500):
+def validate_model(self, traj_embeddings, distance_type, similarity=True, print_batch=500):
     top_10_count = 0
-    test_range = range(self.val_idx[0], self.val_idx[1])    # 只测这一部分
+    test_range = range(self.val_idx[0], self.val_idx[1])
     test_num = len(test_range)
     distance = self.distances[distance_type]
     for i in test_range:
@@ -119,6 +109,7 @@ def validate_model(self, traj_embeddings, distance_type, similarity = True, prin
     print('Search Top 10 recall {}'.format(float(top_10_count) / (test_num * 10)))
     return float(top_10_count) / (test_num * 10)
 
+
 def test_model(self, traj_embeddings, print_batch=1000, similarity=True, r10in50=False):
     test_range = range(self.test_idx[0], self.test_idx[1])
     top_10_count = 0
@@ -128,7 +119,6 @@ def test_model(self, traj_embeddings, print_batch=1000, similarity=True, r10in50
     test_traj_num = 0
     for i in test_range:
         if similarity:
-            # This is for the exp similarity
             test_distance = [(j, float(np.exp(-np.sum(np.square(traj_embeddings[i] - e)))))
                              for j, e in enumerate(traj_embeddings)]
             t_similarity = np.exp(-self.distance[i][:len(traj_embeddings)])
@@ -139,7 +129,6 @@ def test_model(self, traj_embeddings, print_batch=1000, similarity=True, r10in50
             s_true_distance = sorted(
                 true_distance, key=lambda a: a[1], reverse=True)
         else:
-            # This is for computing the distance
             test_distance = [(j, float(np.sum(np.square(traj_embeddings[i] - e))))
                              for j, e in enumerate(traj_embeddings)]
             true_distance = list(
@@ -153,10 +142,9 @@ def test_model(self, traj_embeddings, print_batch=1000, similarity=True, r10in50
         top50_recall = [l[0] for l in s_test_distance[:51]
                         if l[0] in [j[0] for j in s_true_distance[:51]]]
         top5_in_top50 = [l[0] for l in s_test_distance[:6]
-                          if l[0] in [j[0] for j in s_true_distance[:51]]]
+                         if l[0] in [j[0] for j in s_true_distance[:51]]]
         top10_in_top50 = [l[0] for l in s_test_distance[:11]
                           if l[0] in [j[0] for j in s_true_distance[:51]]]
-
 
         top_10_count += len(top10_recall) - 1
         top_50_count += len(top50_recall) - 1

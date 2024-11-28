@@ -14,12 +14,13 @@ else:
 data_folder = '/hy-tmp'
 corrdatapath = f"{data_folder}/features/{data_name}_traj_coord"
 griddatapath = f"{data_folder}/features/{data_name}_traj_grid"
-real_distancepath =f'{data_folder}/features/{data_name}_{distance_type}_distance_all_{full_datalength}'
+real_distancepath = f'{data_folder}/features/{data_name}_{distance_type}_distance_all_{full_datalength}'
 
 source_distance = ['discret_frechet', 'hausdorff', 'erp', 'dtw']
 if distance_type in source_distance:
     source_distance.remove(distance_type)
-source_distance_paths = {measure: f"{data_folder}/features/{data_name}_{measure}_distance_all_{full_datalength}" for measure in source_distance}
+source_distance_paths = {measure: f"{data_folder}/features/{data_name}_{measure}_distance_all_{full_datalength}"
+                         for measure in source_distance}
 
 incell = False
 
@@ -57,6 +58,7 @@ grid_size = [1100, 1100]
 train_idx = (0, 3000)
 val_idx = (3000, 4500)
 test_idx = (4500, 15000)
+
 
 def config_to_str():
     configs = 'learning_rate = {} '.format(learning_rate) + '\n' + \

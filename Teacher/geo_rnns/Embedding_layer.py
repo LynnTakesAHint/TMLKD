@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from einops import rearrange, repeat
 
+
 class FixedAbsolutePositionEmbedding(nn.Module):
     def __init__(self, max_position_embeddings, hidden_size, position_embedding_type):
         super().__init__()

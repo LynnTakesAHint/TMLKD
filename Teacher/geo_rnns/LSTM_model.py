@@ -6,7 +6,8 @@ import torch.nn.functional as F
 from torch.nn import Module
 import tools.config as config
 import torch.nn as nn
-from geo_rnns.Embedding_layer import FixedAbsolutePositionEmbedding
+
+
 class RNNEncoder(Module):
     def __init__(self, hidden_size):
         super(RNNEncoder, self).__init__()
@@ -39,9 +40,10 @@ class RNNEncoder(Module):
         final_outputs = torch.cat(final_outputs, dim=0)
         return final_outputs
 
+
 class LSTM_Network(Module):
     def __init__(self, target_size, batch_size, sampling_num,
-                 last_num = (config.train_size % config.batch_size)):
+                 last_num=(config.train_size % config.batch_size)):
         super(LSTM_Network, self).__init__()
         self.target_size = target_size
         self.sampling_num = sampling_num
@@ -53,9 +55,9 @@ class LSTM_Network(Module):
             self.hidden = autograd.Variable(torch.zeros(self.batch_size, self.target_size),
                                             requires_grad=False).cuda()
             self.teacher_hidden = autograd.Variable(torch.zeros(self.teacher_batch_size, self.target_size),
-                                            requires_grad=False).cuda()
+                                                    requires_grad=False).cuda()
             self.last_hidden = autograd.Variable(torch.zeros(self.teacher_batch_size, self.target_size),
-                                            requires_grad=False).cuda()
+                                                 requires_grad=False).cuda()
         else:
             self.hidden = (autograd.Variable(torch.zeros(self.batch_size, self.target_size),
                                              requires_grad=False).cuda(),
@@ -68,7 +70,7 @@ class LSTM_Network(Module):
 
     def forward(self, coors, grids, lens, last=False, teacher_flag=False):
         anchor_coor_input, pos_coor_input = coors
-        anchor_grid_input, pos_grid_input= grids
+        anchor_grid_input, pos_grid_input = grids
         anchor_len, pos_len = lens
         if teacher_flag:
             hidden = self.teacher_hidden
@@ -82,8 +84,7 @@ class LSTM_Network(Module):
         pos_distance = torch.exp(-F.pairwise_distance(anchor_embs, pos_embs, p=2))
         return pos_distance, pos_embs
 
-
-    def get_embeddings(self, coor, grid, length, hidden = None):
+    def get_embeddings(self, coor, grid, length, hidden=None):
         coor = autograd.Variable(torch.Tensor(coor), requires_grad=False).cuda()
         grid = autograd.Variable(torch.Tensor(grid), requires_grad=False).cuda()
         coor_embs = self.rnn1(coor, length, hidden)

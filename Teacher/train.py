@@ -1,6 +1,7 @@
 import os
 import tools.config as config
 import warnings
+
 warnings.filterwarnings('ignore')
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = config.GPU
