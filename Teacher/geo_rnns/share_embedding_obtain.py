@@ -42,8 +42,8 @@ class TeacherModelEmbeddingGetter(object):
         self.share_embeddings = None
 
     def data_prepare(self,
-                     griddatapath = config.griddatapath,
-                     coordatapath = config.corrdatapath):
+                     griddatapath=config.griddatapath,
+                     coordatapath=config.corrdatapath):
         dataset_length = 10000
         traj_grids, useful_grids, max_len = pickle.load(
             open(griddatapath, 'rb'))
@@ -79,7 +79,6 @@ class TeacherModelEmbeddingGetter(object):
         print(f"Padded Trajs shape:{len(pad_trjs)}")
         self.padded_trajs = np.array(pad_sequence(pad_trjs, maxlen=max_len))
 
-
     def test_models(self, model_name_dict, distance_id):
         share = model_name_dict.get('share', None)
         private = model_name_dict.get('private', None)
@@ -109,8 +108,12 @@ class TeacherModelEmbeddingGetter(object):
         private_embeddings = tm.test_comput_embeddings(self, private_spatial_net)
         if self.share_embeddings is None:
             share_embeddings = tm.test_comput_embeddings(self, share_spatial_net)
-            pickle.dump(share_embeddings, open(f'./teacher_predict_result/{config.distance_type}/{config.data_name}_share_embeddings', 'wb'))
+            pickle.dump(share_embeddings,
+                        open(f'./teacher_predict_result/{config.distance_type}/{config.data_name}_share_embeddings',
+                             'wb'))
             self.share_embeddings = share_embeddings
-        decoder_embeddings = tm.test_comput_embeddings(self, decoder_net, private_embeddings = private_embeddings,
-                                                       share_embeddings=self.share_embeddings, decoder = True)
-        pickle.dump(decoder_embeddings, open(f'./teacher_predict_result/{config.distance_type}/{config.data_name}_{config.source_distance[distance_id]}_decoder_embeddings', 'wb'))
+        decoder_embeddings = tm.test_comput_embeddings(self, decoder_net, private_embeddings=private_embeddings,
+                                                       share_embeddings=self.share_embeddings, decoder=True)
+        pickle.dump(decoder_embeddings, open(
+            f'./teacher_predict_result/{config.distance_type}/{config.data_name}_{config.source_distance[distance_id]}_decoder_embeddings',
+            'wb'))

@@ -4,22 +4,13 @@ import torch
 import torch.autograd as autograd
 import tools.config as config
 
+
 def pad_sequence(traj_grids, maxlen=100, pad_value=0.0):
-    """
-    padding
-    Args:
-        traj_grids: 原始轨迹
-        maxlen: 最大长度
-        pad_value: 空值
-
-    Returns:
-
-    """
     paddec_seqs = []
     for traj in traj_grids:
         pad_r = np.zeros_like(traj[0]) * pad_value
         while len(traj) < maxlen:
-            traj.append(pad_r)  # 在末尾不上同纬度的pad_value填充的矩阵
+            traj.append(pad_r)
         paddec_seqs.append(traj)
     return paddec_seqs
 
@@ -53,7 +44,6 @@ def test_comput_embeddings(self, spatial_net, test_batch=1025, mode='val'):
         if mode != 'val':
             if (j % 1000) == 0:
                 print(j)
-    # if mode!='val':
     print('embedding time of {} trajectories: {}'.format(10000, time.time() - s))
     embeddings_list = torch.cat(embeddings_list, dim=0)
     return embeddings_list.cpu().numpy()
@@ -61,28 +51,26 @@ def test_comput_embeddings(self, spatial_net, test_batch=1025, mode='val'):
 
 def validate_model(self, traj_embeddings, rank_info):
     top_5_count = 0
-    # cluster_center = self.train_indice + self.val_indice
     cluster_center = self.val_indice
     data_length = len(cluster_center)
     for anchor_traj in cluster_center:
-        # 计算第i条轨迹，与test_range范围内轨迹的距离
         start = anchor_traj // 50 * 50
         end = start + 50
-        test_distance = [(j+start, float(np.exp(-np.sum(np.square(traj_embeddings[anchor_traj] - e)))))
+        test_distance = [(j + start, float(np.exp(-np.sum(np.square(traj_embeddings[anchor_traj] - e)))))
                          for j, e in enumerate(traj_embeddings[start:end])]
-        sorted_test_distance = sorted(test_distance, key=lambda a:a[1], reverse=True)
+        sorted_test_distance = sorted(test_distance, key=lambda a: a[1], reverse=True)
         sorted_test_id = [i[0] for i in sorted_test_distance][:6]
         real_id = rank_info[anchor_traj]
         top_5_trajs_hit = [i for i in sorted_test_id if i in real_id]
-        top_5_count+=(len(top_5_trajs_hit)-1)
-    hitting_rate = top_5_count/len(cluster_center)/5
-    print('Test on %d trajs, acc is %f.'%(data_length, hitting_rate))
+        top_5_count += (len(top_5_trajs_hit) - 1)
+    hitting_rate = top_5_count / len(cluster_center) / 5
+    print('Test on %d trajs, acc is %f.' % (data_length, hitting_rate))
     return hitting_rate
 
-def test_comput_embeddings_for_time(self, spatial_net, test_batch=1025, rrange = 1000):
+
+def test_comput_embeddings_for_time(self, spatial_net, test_batch=1025, rrange=1000):
     embeddings_list = []
     j = 0
-    s = time.time()
     data_length = rrange
     embeddings = None
     if config.recurrent_unit == 'GRU' or config.recurrent_unit == 'SimpleRNN':
@@ -105,6 +93,7 @@ def test_comput_embeddings_for_time(self, spatial_net, test_batch=1025, rrange =
     embeddings_list = torch.cat(embeddings_list, dim=0)
     return embeddings_list.cpu().numpy()
 
+
 def final_test_model(self, traj_embeddings, print_batch=10, similarity=True, r10in50=False):
     test_range = range(config.train_trajectory_size, config.full_datalength)
     top_10_count = 0
@@ -114,7 +103,6 @@ def final_test_model(self, traj_embeddings, print_batch=10, similarity=True, r10
     all_true_distance, all_test_distance = [], []
     for i in test_range:
         if similarity:
-            # This is for the exp similarity
             test_distance = [(j, float(np.exp(-np.sum(np.square(traj_embeddings[i] - e)))))
                              for j, e in enumerate(traj_embeddings)]
             t_similarity = np.exp(-self.distance[i][:len(traj_embeddings)])
@@ -141,9 +129,6 @@ def final_test_model(self, traj_embeddings, print_batch=10, similarity=True, r10
         top10_in_top50 = [l[0] for l in s_test_distance[:11]
                           if l[0] in [j[0] for j in s_true_distance[:51]]]
 
-        s_true_50 = [j[0] for j in s_true_distance[:51]]
-        s_pred_50 = [l[0] for l in s_test_distance[:51]]
-
         top_10_count += len(top10_recall) - 1
         top_50_count += len(top50_recall) - 1
         top10_in_top50_count += len(top10_in_top50) - 1
@@ -157,17 +142,12 @@ def final_test_model(self, traj_embeddings, print_batch=10, similarity=True, r10
         test_top_10_distance = 0.
         for ij in s_test_distance[:11]:
             test_top_10_distance += self.distance[i][ij[0]]
-        test_top_10_distance_r10in50 = 0.
         temp_distance_in_test50 = []
         for ij in s_test_distance[:51]:
             temp_distance_in_test50.append([ij, self.distance[i][ij[0]]])
-        sort_dis_10in50 = sorted(temp_distance_in_test50, key=lambda x: x[1])
-        test_top_10_distance_r10in50 = sum(
-            [iaj[1] for iaj in sort_dis_10in50[:11]])
 
         test_traj_num += 1
         if (i % print_batch) == 0:
-            # print test_distance
             print('**----------------------------------**')
             print(s_test_distance[:20])
             print(s_true_distance[:20])
@@ -184,4 +164,4 @@ def final_test_model(self, traj_embeddings, print_batch=10, similarity=True, r10
         float(top10_in_top50_count) / (test_traj_num * 10)))
     return (float(top_10_count) / (test_traj_num * 10),
             float(top_50_count) / (test_traj_num * 50),
-            float(top10_in_top50_count) / (test_traj_num * 10),0)
+            float(top10_in_top50_count) / (test_traj_num * 10), 0)

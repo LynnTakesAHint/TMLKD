@@ -3,13 +3,12 @@ import pickle
 import time
 from typing import List
 import itertools
-import datetime
 
 import tools.sampling_methods as sm
 import tools.test_methods as tm
 from geo_rnns.wrloss import *
 from geo_rnns.neutraj_model import NeuTraj_Network, NeuTraj_Share_Network, NeuTraj_Decoder
-from geo_rnns.teacher_trainer_T3S import pad_sequence, list2tensor
+from geo_rnns.teacher_trainer_T3S import pad_sequence
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = config.GPU
@@ -70,8 +69,8 @@ class NeutrajTrainer(object):
 
         print(f"Padded Trajs shape:{len(pad_trjs)}")
         self.padded_trajs = np.array(pad_sequence(pad_trjs, maxlen=max_len))
-        self.train_seqs: List[List[List[float, float, int, int]]] = self.padded_trajs[
-                                                                    self.train_idx[0]:self.train_idx[1]]
+        self.train_seqs: List[List[List[float, float, int, int]]] = \
+            self.padded_trajs[self.train_idx[0]:self.train_idx[1]]
         self.padded_trajs = np.array(pad_sequence(pad_trjs, maxlen=max_len))
         self.distances = []
         self.train_distances = []
@@ -199,7 +198,6 @@ class NeutrajTrainer(object):
             print('=' * 40)
             print("Start training Epochs : {}".format(epoch + 1))
             share_spatial_net.train()
-            x = datetime.datetime.now()
             share_top10_acc_list = [0 for i in range(len(self.distances))]
             for distance_id in range(len(self.distances)):
                 private_spatial_net[distance_id].train()
@@ -245,7 +243,8 @@ class NeutrajTrainer(object):
                     share_top10_acc_list[validate_distance_id] = tmp
                 if self.judge_update(best_acc=share_best_top10_acc_list, current_acc=share_top10_acc_list):
                     share_best_top10_acc_list = [i for i in share_top10_acc_list]
-                    share_save_model_name = f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.base_model}_share_best_model.h5'
+                    share_save_model_name = \
+                        f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.base_model}_share_best_model.h5'
                     print(share_save_model_name)
                     torch.save(share_spatial_net.state_dict(), share_save_model_name)
                 print('Validate Private Net:', end='')
@@ -255,7 +254,8 @@ class NeutrajTrainer(object):
                     print(
                         f"Better hr on {config.source_distance[distance_id]}: private {private_top10_acc}")
                     private_best_top10_acc[distance_id] = private_top10_acc
-                    private_save_model_name = f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.source_distance[distance_id]}_{config.base_model}_private_best_model.h5'
+                    private_save_model_name = \
+                        f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.source_distance[distance_id]}_{config.base_model}_private_best_model.h5'
                     print(private_save_model_name)
                     torch.save(private_spatial_net[distance_id].state_dict(), private_save_model_name)
                 print('Validate Decoder Net:', end='')
@@ -268,6 +268,7 @@ class NeutrajTrainer(object):
                     print(
                         f"Better hr on {config.source_distance[distance_id]}: decoder {decoder_top10_acc}")
                     decoder_best_top10_acc[distance_id] = decoder_top10_acc
-                    decoder_save_model_name = f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.source_distance[distance_id]}_{config.base_model}_decoder_best_model.h5'
+                    decoder_save_model_name = \
+                        f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.source_distance[distance_id]}_{config.base_model}_decoder_best_model.h5'
                     print(decoder_save_model_name)
                     torch.save(decoder_net[distance_id].state_dict(), decoder_save_model_name)

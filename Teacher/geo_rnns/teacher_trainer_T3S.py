@@ -1,10 +1,8 @@
-import math
 import os
 import pickle
 import time
 import tools.sampling_methods as sm
 import itertools
-import datetime
 import tools.test_methods as tm
 from geo_rnns.wrloss import *
 from geo_rnns.t3s_model import T3S_Network, T3S_Share_Network, T3S_Decoder
@@ -29,7 +27,7 @@ def pad_sequence(traj_grids, maxlen=250, pad_value=0.0):
         traj_copy = traj[::]
         pad_r = np.zeros_like(traj[0]) * pad_value
         while len(traj_copy) < maxlen:
-            traj_copy.append(pad_r) 
+            traj_copy.append(pad_r)
         paddec_seqs.append(traj_copy)
     return paddec_seqs
 
@@ -116,8 +114,13 @@ class T3STrainer(object):
             negative_distance = []
             anchor_input_len, trajs_input_len, negative_input_len = [], [], []
             for i in range(self.batch_size):
-                sampling_index_list = sm.distance_sampling(self.distance, len(self.train_seqs), j + i, config.mail_pre_degrees.get(config.source_distance[distance_id], 8))
-                negative_sampling_index_list = sm.negative_distance_sampling(self.distance, len(self.train_seqs), j + i, config.mail_pre_degrees.get(config.source_distance[distance_id], 8))
+                sampling_index_list = sm.distance_sampling(self.distance, len(self.train_seqs), j + i,
+                                                           config.mail_pre_degrees.get(
+                                                               config.source_distance[distance_id], 8))
+                negative_sampling_index_list = sm.negative_distance_sampling(self.distance, len(self.train_seqs), j + i,
+                                                                             config.mail_pre_degrees.get(
+                                                                                 config.source_distance[distance_id],
+                                                                                 8))
                 trajs_input.append(train_seqs[j + i])
                 anchor_input.append(train_seqs[j + i])
                 negative_input.append(train_seqs[j + i])
@@ -156,7 +159,6 @@ class T3STrainer(object):
         opt = torch.optim.Adam(params=params_to_opt, lr=config.learning_rate)
         return opt
 
-
     def judge_update(self, best_acc, current_acc):
         return sum(best_acc) <= sum(current_acc)
 
@@ -187,8 +189,6 @@ class T3STrainer(object):
             print('=' * 40)
             print("Start training Epochs : {}".format(epoch + 1))
             share_spatial_net.train()
-            x = datetime.datetime.now()
-            share_top10_acc = 0
             share_top10_acc_list = [0 for i in range(len(self.distances))]
             for distance_id in range(len(self.distances)):
                 private_spatial_net[distance_id].train()
@@ -234,7 +234,8 @@ class T3STrainer(object):
                     share_top10_acc_list[validate_distance_id] = tmp
                 if self.judge_update(best_acc=share_best_top10_acc_list, current_acc=share_top10_acc_list):
                     share_best_top10_acc_list = [i for i in share_top10_acc_list]
-                    share_save_model_name = f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.base_model}_share_best_model.h5'
+                    share_save_model_name = \
+                        f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.base_model}_share_best_model.h5'
                     print(share_save_model_name)
                     torch.save(share_spatial_net.state_dict(), share_save_model_name)
                 print('Validate Private Net:', end='')
@@ -244,7 +245,8 @@ class T3STrainer(object):
                     print(
                         f"Better hr on {config.source_distance[distance_id]}: private {private_top10_acc}")
                     private_best_top10_acc[distance_id] = private_top10_acc
-                    private_save_model_name = f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.source_distance[distance_id]}_{config.base_model}_private_best_model.h5'
+                    private_save_model_name = \
+                        f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.source_distance[distance_id]}_{config.base_model}_private_best_model.h5'
                     print(private_save_model_name)
                     torch.save(private_spatial_net[distance_id].state_dict(), private_save_model_name)
                 print('Validate Decoder Net:', end='')
@@ -257,6 +259,7 @@ class T3STrainer(object):
                     print(
                         f"Better hr on {config.source_distance[distance_id]}: decoder {decoder_top10_acc}")
                     decoder_best_top10_acc[distance_id] = decoder_top10_acc
-                    decoder_save_model_name = f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.source_distance[distance_id]}_{config.base_model}_decoder_best_model.h5'
+                    decoder_save_model_name = \
+                        f'{config.data_folder}/model/{config.data_name}_{config.distance_type}_{config.source_distance[distance_id]}_{config.base_model}_decoder_best_model.h5'
                     print(decoder_save_model_name)
                     torch.save(decoder_net[distance_id].state_dict(), decoder_save_model_name)

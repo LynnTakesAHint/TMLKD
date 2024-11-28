@@ -65,7 +65,6 @@ class DiffLoss(Module):
         return cost * 0.001
 
 
-
 class AllTheTeacherLoss(Module):
     def __init__(self, batch_size, sampling_num):
         super(AllTheTeacherLoss, self).__init__()
@@ -92,7 +91,8 @@ class AllTheTeacherLoss(Module):
             target_loss_lst.append(trajs_target_loss)
         for p_input, p_target, n_input, n_target, share_embeddings, private_embeddings in share_input:
             # Base Loss
-            trajs_target_loss = self.target_loss(p_input.cuda(), p_target.cuda(), n_input.cuda(), n_target.cuda()) / len(share_input)
+            trajs_target_loss = (self.target_loss(p_input.cuda(), p_target.cuda(), n_input.cuda(), n_target.cuda())
+                                 / len(share_input))
             self.share_loss = self.share_loss + trajs_target_loss
             target_loss_lst.append(trajs_target_loss)
             # Representation Loss

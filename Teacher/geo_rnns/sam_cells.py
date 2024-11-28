@@ -8,6 +8,7 @@ import torch
 import torch.nn.functional as F
 import math
 
+
 class RNNCellBase(Module):
     def extra_repr(self):
         s = '{input_size}, {hidden_size}'
@@ -33,6 +34,7 @@ class RNNCellBase(Module):
             raise RuntimeError(
                 "hidden{} has inconsistent hidden_size: got {}, expected {}".format(
                     hidden_label, hx.size(1), self.hidden_size))
+
 
 class LSTMCell(RNNCellBase):
     r"""A long short-term memory (LSTM) cell.
@@ -136,6 +138,7 @@ class LSTMCell(RNNCellBase):
 
         return hy, cy_h
 
+
 class GRUCell(RNNCellBase):
     r"""A gated recurrent unit (GRU) cell
 
@@ -222,18 +225,19 @@ class GRUCell(RNNCellBase):
         resetgate = F.sigmoid(i_r + h_r)
         updategate = F.sigmoid(i_i + h_i)
         newgate = F.tanh(i_n + resetgate * h_n)
-        hyy = (1- updategate)*newgate + updategate*hidden
+        hyy = (1 - updategate) * newgate + updategate * hidden
         return hyy
 
+
 class SAM_LSTMCell(RNNCellBase):
-    def __init__(self, input_size, hidden_size, grid_size, bias=True, incell = True):
+    def __init__(self, input_size, hidden_size, grid_size, bias=True, incell=True):
         super(SAM_LSTMCell, self).__init__()
         self.incell = incell
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.grid_size = grid_size
         self.bias = bias
-        self.weight_ih = Parameter(torch.Tensor(5 * hidden_size, input_size-2))
+        self.weight_ih = Parameter(torch.Tensor(5 * hidden_size, input_size - 2))
         self.weight_hh = Parameter(torch.Tensor(5 * hidden_size, hidden_size))
         if bias:
             self.bias_ih = Parameter(torch.Tensor(5 * hidden_size))
@@ -241,9 +245,9 @@ class SAM_LSTMCell(RNNCellBase):
         else:
             self.register_parameter('bias_ih', None)
             self.register_parameter('bias_hh', None)
-        self.spatial_embedding = SpatialExternalMemory(grid_size[0]+3*config.spatial_width,
-                                                                grid_size[1]+3*config.spatial_width,
-                                                                hidden_size).cuda()
+        self.spatial_embedding = SpatialExternalMemory(grid_size[0] + 3 * config.spatial_width,
+                                                       grid_size[1] + 3 * config.spatial_width,
+                                                       hidden_size).cuda()
         self.atten = Attention(hidden_size).cuda()
         self.c_d = None
         self.sg = None
@@ -262,8 +266,8 @@ class SAM_LSTMCell(RNNCellBase):
 
     def spatial_lstm_cell(self, input_a, hidden, w_ih, w_hh, b_ih=None, b_hh=None):
         # self.spatial_embedding = torch.ones(self.spatial_embedding.size()).cuda()
-        input = input_a[:,:-2]
-        grid_input = input_a[:,-2:].type(torch.LongTensor).cuda() + config.spatial_width
+        input = input_a[:, :-2]
+        grid_input = input_a[:, -2:].type(torch.LongTensor).cuda() + config.spatial_width
 
         hx, cx = hidden
         gates = F.linear(input, w_ih, b_ih) + F.linear(hx, w_hh, b_hh)
@@ -277,9 +281,9 @@ class SAM_LSTMCell(RNNCellBase):
         spatialgate = F.sigmoid(spatialgate)
         cy_h = (forgetgate * cx) + (ingate * cellgate)
         # print 'cy size: {}'.format(cy_h.size())
-        cy_hh  = cy_h.data
+        cy_hh = cy_h.data
         cs = self.spatial_embedding.find_nearby_grids(grid_input)
-        atten_cs, attn_weights = self.atten(cy_hh,cs)
+        atten_cs, attn_weights = self.atten(cy_hh, cs)
         c = cy_h + spatialgate * atten_cs
         # c = cy_h
         hy = outgate * F.tanh(c)
@@ -288,15 +292,15 @@ class SAM_LSTMCell(RNNCellBase):
             grid_x, grid_y = grid_input[:, 0].data, grid_input[:, 1].data
             self.sg = spatialgate.data
             self.c_d = c.data
-            updates = self.sg* self.spatial_embedding.read(grid_x, grid_y) + (1-self.sg) * self.c_d
+            updates = self.sg * self.spatial_embedding.read(grid_x, grid_y) + (1 - self.sg) * self.c_d
             if self.training:
                 self.spatial_embedding.update(grid_x, grid_y, updates)
 
         return hy, c
 
     def batch_update_memory(self, input_a, hidden, w_ih, w_hh, b_ih=None, b_hh=None):
-        input = input_a[:,:-2]
-        grid_input = input_a[:,-2:].type(torch.LongTensor).cuda()+ config.spatial_width
+        input = input_a[:, :-2]
+        grid_input = input_a[:, -2:].type(torch.LongTensor).cuda() + config.spatial_width
 
         hx, cx = hidden
         gates = F.linear(input, w_ih, b_ih) + F.linear(hx, w_hh, b_hh)
@@ -309,27 +313,28 @@ class SAM_LSTMCell(RNNCellBase):
         spatialgate = F.sigmoid(spatialgate)
         cy_h = (forgetgate * cx) + (ingate * cellgate)
         # print 'cy size: {}'.format(cy_h.size())
-        cy_hh  = cy_h.data
+        cy_hh = cy_h.data
         cs = self.spatial_embedding.find_nearby_grids(grid_input, config.spatial_width)
-        atten_cs, attn_weights = self.atten.grid_update_atten(cy_hh,cs)
+        atten_cs, attn_weights = self.atten.grid_update_atten(cy_hh, cs)
 
         c = cy_h + spatialgate * atten_cs
         grid_x, grid_y = grid_input[:, 0].data, grid_input[:, 1].data
         self.sg = spatialgate.data
         self.c_d = c.data
-        updates = self.sg* self.spatial_embedding.read(grid_x, grid_y) + (1-self.sg) * self.c_d
+        updates = self.sg * self.spatial_embedding.read(grid_x, grid_y) + (1 - self.sg) * self.c_d
         if self.training:
             self.spatial_embedding.update(grid_x, grid_y, updates)
 
+
 class SAM_GRUCell(RNNCellBase):
 
-    def __init__(self, input_size, hidden_size, grid_size, bias=True, incell = True):
+    def __init__(self, input_size, hidden_size, grid_size, bias=True, incell=True):
         super(SAM_GRUCell, self).__init__()
         self.incell = incell
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.bias = bias
-        self.weight_ih = Parameter(torch.Tensor(4 * hidden_size, input_size-2))
+        self.weight_ih = Parameter(torch.Tensor(4 * hidden_size, input_size - 2))
         self.weight_hh = Parameter(torch.Tensor(4 * hidden_size, hidden_size))
         if bias:
             self.bias_ih = Parameter(torch.Tensor(4 * hidden_size))
@@ -338,9 +343,9 @@ class SAM_GRUCell(RNNCellBase):
             self.register_parameter('bias_ih', None)
             self.register_parameter('bias_hh', None)
 
-        self.spatial_embedding = SpatialExternalMemory(grid_size[0]+3*config.spatial_width,
-                                                                grid_size[1]+3*config.spatial_width,
-                                                                hidden_size).cuda()
+        self.spatial_embedding = SpatialExternalMemory(grid_size[0] + 3 * config.spatial_width,
+                                                       grid_size[1] + 3 * config.spatial_width,
+                                                       hidden_size).cuda()
 
         self.atten = Attention(hidden_size).cuda()
         self.c_d = None
@@ -360,8 +365,8 @@ class SAM_GRUCell(RNNCellBase):
         )
 
     def spatial_gru_cell(self, input_a, hidden, w_ih, w_hh, b_ih=None, b_hh=None):
-        input = input_a[:,:-2]
-        grid_input = input_a[:,-2:].type(torch.LongTensor).cuda() + config.spatial_width
+        input = input_a[:, :-2]
+        grid_input = input_a[:, -2:].type(torch.LongTensor).cuda() + config.spatial_width
 
         gi = F.linear(input, w_ih, b_ih)
         gh = F.linear(hidden, w_hh, b_hh)
@@ -376,21 +381,21 @@ class SAM_GRUCell(RNNCellBase):
 
         cs = self.spatial_embedding.find_nearby_grids(grid_input, config.spatial_width)
         atten_cs, attn_weights = self.atten(cy_hh, cs)
-        curr_state = newgate+spatialgate*atten_cs
+        curr_state = newgate + spatialgate * atten_cs
         hyy = curr_state + updategate * (hidden - curr_state)
         if self.incell:
             grid_x, grid_y = grid_input[:, 0].data, grid_input[:, 1].data
 
             self.sg = spatialgate.data
             self.c_d = hyy.data
-            updates = self.sg* self.spatial_embedding.read(grid_x, grid_y) + (1-self.sg) * self.c_d
+            updates = self.sg * self.spatial_embedding.read(grid_x, grid_y) + (1 - self.sg) * self.c_d
             if self.training:
                 self.spatial_embedding.update(grid_x, grid_y, updates)
         return hyy
 
     def batch_update_memory(self, input_a, hidden, w_ih, w_hh, b_ih=None, b_hh=None):
-        input = input_a[:,:-2]
-        grid_input = input_a[:,-2:].type(torch.LongTensor).cuda() + config.spatial_width
+        input = input_a[:, :-2]
+        grid_input = input_a[:, -2:].type(torch.LongTensor).cuda() + config.spatial_width
 
         gi = F.linear(input, w_ih, b_ih)
         gh = F.linear(hidden, w_hh, b_hh)
@@ -413,6 +418,6 @@ class SAM_GRUCell(RNNCellBase):
 
         self.sg = spatialgate.data
         self.c_d = hyy.data
-        updates = self.sg* self.spatial_embedding.read(grid_x, grid_y)+ (1-self.sg) * self.c_d
+        updates = self.sg * self.spatial_embedding.read(grid_x, grid_y) + (1 - self.sg) * self.c_d
 
         self.spatial_embedding.update(grid_x, grid_y, updates)
