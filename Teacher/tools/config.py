@@ -3,8 +3,10 @@ mode = 'train'  # train(training model) / output(deriving embeddings from traine
 
 GPU = '0'
 distance_type = 'hausdorff'
+# Initial is 's' -> training for target measure(student model)
+# Initial is 't' -> training source measure(teacher model)
 data_name = 'troma' if mode == 'train' else 'sroma'
-base_model = 'T3S'
+base_model = 'T3S'  # T3S or NeuTraj
 
 if data_name[0] == 't':
     full_datalength = 15000
@@ -16,7 +18,7 @@ corrdatapath = f"{data_folder}/features/{data_name}_traj_coord"
 griddatapath = f"{data_folder}/features/{data_name}_traj_grid"
 real_distancepath = f'{data_folder}/features/{data_name}_{distance_type}_distance_all_{full_datalength}'
 
-source_distance = ['discret_frechet', 'hausdorff', 'erp', 'dtw']
+source_distance = ['discret_frechet', 'hausdorff', 'erp', 'dtw']    # you can select from these measures, also, you can add new teachers.
 if distance_type in source_distance:
     source_distance.remove(distance_type)
 source_distance_paths = {measure: f"{data_folder}/features/{data_name}_{measure}_distance_all_{full_datalength}"

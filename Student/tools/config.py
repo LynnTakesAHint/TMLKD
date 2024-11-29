@@ -7,7 +7,7 @@ prob_rho = 7
 weak_threshold = 0.01
 d = 128
 
-base_model = 'T3S'
+base_model = 'T3S'  # T3S or NeuTraj
 full_datalength = 10000
 
 epochs = 250
