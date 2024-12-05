@@ -4,7 +4,7 @@ This is the code of **TMLKD**.
 
 ## Require Packages
 
-Pytorch==1.17.0, Numpy, traj_dist, einops.
+Pytorch, Numpy, traj_dist, einops.
 
 ## Running Procedures
 
