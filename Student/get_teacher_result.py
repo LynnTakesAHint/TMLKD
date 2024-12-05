@@ -9,7 +9,7 @@ import tools.config as config
 def get_teacher_predicted_ranking(distance_type, data_name):
     all_res = []
     folder = f'./teacher_predict_result/{distance_type}/'
-    source_distances = ['dtw', 'discret_frechet', 'hausdorff', 'erp']
+    source_distances = config.source_distances
     if distance_type in source_distances:
         source_distances.remove(distance_type)
     for source_distance in source_distances:
@@ -52,7 +52,7 @@ def get_position_score(position, prob_rho=5):
 
 
 def get_enriched_ranking_data(prob_rho, data_name, distance_type, all_predicted_rank):
-    source_distance = ['discret_frechet', 'dtw', 'erp', 'hausdorff']
+    source_distance = config.source_distances
     if distance_type in source_distance:
         source_distance.remove(distance_type)
     distance_info_path = config.distance_info_path

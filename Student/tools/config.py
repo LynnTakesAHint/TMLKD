@@ -1,6 +1,7 @@
 # Data path
 distance_type = 'hausdorff'
 data_name = 'sroma'
+source_distance = ['discret_frechet', 'hausdorff', 'erp', 'dtw']    # you can select from these measures, also, you can add new teachers.
 GPU = '0'
 
 prob_rho = 7
