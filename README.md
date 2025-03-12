@@ -10,7 +10,7 @@ Pytorch, Numpy, traj_dist, einops.
 
 ### Download Files
 
-Due to the restriction of github platform, please download the [ground truth file]() and put it into your data-folder, which can be set in `config.py`.
+Due to the restriction of github platform, please download [the dataset and trained models](https://drive.google.com/file/d/1icbJl0d31T3qqCvHAr4ef9GfiV6iYRQA/view?usp=sharing) and put it into your data-folder, which can be set in `config.py`.
 
 ### Create Folders
 
